@@ -2,71 +2,86 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-app.use(express.static(path.join(__dirname, 'public')));
+function resolvePublicDir() {
+  const candidates = [];
+  if (process.env.PUBLIC_DIR) candidates.push(path.resolve(process.env.PUBLIC_DIR));
+  candidates.push(
+    path.join(__dirname, 'public'),
+    path.join(__dirname, 'curio-online', 'public')
+  );
+  for (const dir of candidates) {
+    try { if (fs.existsSync(path.join(dir, 'index.html'))) return dir; } catch (_) {}
+  }
+  return candidates[0];
+}
 
-// Explicit root route so platforms like Railway
-// always serve the main app HTML on "/"
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+const PUBLIC_DIR = resolvePublicDir();
+app.use(express.static(PUBLIC_DIR));
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
-// ── Questions ────────────────────────────────────────────────────────────────
+// ── 50 Questions: 17 Funny · 17 Get To Know · 16 Flirty ─────────────────────
 const BASE_QUESTIONS = [
-  {cat:"🌍 Dreams",q:"If you could live anywhere for a year, where would you go and why?"},
-  {cat:"🌍 Dreams",q:"What's one thing on your bucket list you haven't done yet?"},
-  {cat:"🌍 Dreams",q:"If money wasn't a thing, what career would you choose?"},
-  {cat:"🌍 Dreams",q:"Describe your perfect day from morning to night."},
-  {cat:"🌍 Dreams",q:"What's a skill you've always wanted to master?"},
-  {cat:"👨‍👩‍👧 Family",q:"What's your favourite memory with your family growing up?"},
-  {cat:"👨‍👩‍👧 Family",q:"What's a tradition from your childhood you want to keep?"},
-  {cat:"👨‍👩‍👧 Family",q:"What's one thing your parents taught you that you really value?"},
-  {cat:"👨‍👩‍👧 Family",q:"How would your family describe you in three words?"},
-  {cat:"💬 Opinions",q:"What's a hill you would die on — an opinion you'll never change?"},
-  {cat:"💬 Opinions",q:"What's a popular trend you genuinely don't understand?"},
-  {cat:"💬 Opinions",q:"What's something most people do that you think is overrated?"},
-  {cat:"💬 Opinions",q:"What do you think is criminally underrated in life?"},
-  {cat:"🎉 Fun",q:"What reality show would you either dominate or completely fail at?"},
-  {cat:"🎉 Fun",q:"What's your go-to karaoke song?"},
-  {cat:"🎉 Fun",q:"If you were a snack, what would you be and why?"},
-  {cat:"🎉 Fun",q:"What's the most embarrassing thing that's ever happened to you in public?"},
-  {cat:"🎉 Fun",q:"What's a movie you could quote from start to finish?"},
-  {cat:"🎉 Fun",q:"What's the weirdest food combination you actually enjoy?"},
-  {cat:"🧠 Deep",q:"What's something about yourself that took you a long time to accept?"},
-  {cat:"🧠 Deep",q:"What's a failure that ended up teaching you something valuable?"},
-  {cat:"🧠 Deep",q:"When do you feel most like yourself?"},
-  {cat:"🧠 Deep",q:"What's the best advice you've ever received?"},
-  {cat:"🧠 Deep",q:"What does success mean to you personally?"},
-  {cat:"🔮 Future",q:"Where do you see yourself in five years?"},
-  {cat:"🔮 Future",q:"What does your ideal home life look like?"},
-  {cat:"🔮 Future",q:"Is there a skill you want to master before you turn 40?"},
-  {cat:"🧒 Childhood",q:"What did you want to be when you grew up?"},
-  {cat:"🧒 Childhood",q:"Did you have a nickname growing up? What's the story?"},
-  {cat:"🧒 Childhood",q:"What's the best trouble you got into as a kid?"},
-  {cat:"🧒 Childhood",q:"What book, show, or film from childhood shaped who you are?"},
-  {cat:"✨ Right Now",q:"What's something you're really excited about lately?"},
-  {cat:"✨ Right Now",q:"What song have you had on repeat this week?"},
-  {cat:"✨ Right Now",q:"What have you been learning or exploring recently?"},
-  {cat:"✨ Right Now",q:"What does a typical weekend look like for you right now?"},
-  {cat:"🤪 Quirks",q:"What's a habit you have that most people would find strange?"},
-  {cat:"🤪 Quirks",q:"What's something you're oddly competitive about?"},
-  {cat:"🤪 Quirks",q:"What's a small luxury you absolutely refuse to give up?"},
-  {cat:"🤪 Quirks",q:"What's a guilty pleasure you're not actually that guilty about?"},
-  {cat:"🤪 Quirks",q:"What's the last thing that made you laugh until you cried?"},
-  {cat:"🌟 Values",q:"What does a good friendship look like to you?"},
-  {cat:"🌟 Values",q:"What's a cause you genuinely care about?"},
-  {cat:"🌟 Values",q:"Do you think people can really change? What shaped that view?"},
-  {cat:"🌟 Values",q:"What's something about the world you wish more people understood?"},
-  {cat:"🌟 Values",q:"What's the most important quality in someone you spend time with?"},
-  {cat:"🤔 Random",q:"If you could have dinner with anyone, living or dead, who would it be?"},
-  {cat:"🤔 Random",q:"What superpower would you pick and what would you use it for?"},
-  {cat:"🤔 Random",q:"Cats or dogs — and what does your answer say about you?"},
-  {cat:"🤔 Random",q:"What's something you've changed your mind about in the last year?"},
-  {cat:"🤔 Random",q:"What's the most spontaneous thing you've ever done?"},
+  // 😂 FUNNY (17)
+  { cat:'😂 Funny', q:"What's the most ridiculous thing you've ever done to impress someone?" },
+  { cat:'😂 Funny', q:"If your life had a laugh track, when would it go off most today?" },
+  { cat:'😂 Funny', q:"What's the weirdest food combination you genuinely enjoy?" },
+  { cat:'😂 Funny', q:"If you were a villain, what would your evil plan be?" },
+  { cat:'😂 Funny', q:"What's a completely irrational fear you have that you can't explain?" },
+  { cat:'😂 Funny', q:"What's the most dramatic thing you've done over something completely tiny?" },
+  { cat:'😂 Funny', q:"If animals could talk, which one would be the most unbearable?" },
+  { cat:'😂 Funny', q:"What's the worst advice you were given and actually followed?" },
+  { cat:'😂 Funny', q:"What's your go-to dance move — and does it have a name?" },
+  { cat:'😂 Funny', q:"If you were a pizza topping, which one and why?" },
+  { cat:'😂 Funny', q:"What's the most chaotic thing you did as a kid that your parents never found out?" },
+  { cat:'😂 Funny', q:"What reality show would you either dominate or completely embarrass yourself on?" },
+  { cat:'😂 Funny', q:"What's the most useless talent you have?" },
+  { cat:'😂 Funny', q:"If you could only eat one cuisine for the rest of your life but it had to be from a gas station, what would you choose?" },
+  { cat:'😂 Funny', q:"What's a hill you will absolutely die on, even though you know it's ridiculous?" },
+  { cat:'😂 Funny', q:"What's something you did as a kid that you thought was totally normal but was actually very weird?" },
+  { cat:'😂 Funny', q:"If you had a theme song that played every time you walked into a room, what would it be?" },
+
+  // 🌟 GET TO KNOW YOU (17)
+  { cat:'🌟 About You', q:"What's something you believed as a child that turned out to be completely wrong?" },
+  { cat:'🌟 About You', q:"What does your perfect Sunday look like from start to finish?" },
+  { cat:'🌟 About You', q:"What's something you've changed your mind about in the last year?" },
+  { cat:'🌟 About You', q:"What do you think about on long drives or walks alone?" },
+  { cat:'🌟 About You', q:"What's a value you hold that most people around you don't share?" },
+  { cat:'🌟 About You', q:"If you could go back and give your 16-year-old self one piece of advice, what would it be?" },
+  { cat:'🌟 About You', q:"What's the most spontaneous thing you've ever done — and did it pay off?" },
+  { cat:'🌟 About You', q:"What would your friends say is your most annoying habit?" },
+  { cat:'🌟 About You', q:"When do you feel most like the truest version of yourself?" },
+  { cat:'🌟 About You', q:"What's a failure that ended up teaching you something you're grateful for?" },
+  { cat:'🌟 About You', q:"What's something you want to get better at — and what's stopping you?" },
+  { cat:'🌟 About You', q:"What's a skill or talent you're secretly proud of?" },
+  { cat:'🌟 About You', q:"If you could have dinner with anyone from history, who and why?" },
+  { cat:'🌟 About You', q:"What does success genuinely mean to you — not what you think it should mean?" },
+  { cat:'🌟 About You', q:"What's something about the world that genuinely excites you right now?" },
+  { cat:'🌟 About You', q:"What's a book, film or song that changed the way you see something?" },
+  { cat:'🌟 About You', q:"What's the best piece of advice someone has ever given you?" },
+
+  // 😏 FLIRTY (16)
+  { cat:'😏 Flirty', q:"What's the first thing you notice about someone you're attracted to?" },
+  { cat:'😏 Flirty', q:"What's the most attractive quality someone can have that has nothing to do with looks?" },
+  { cat:'😏 Flirty', q:"What's your idea of an absolutely perfect first date?" },
+  { cat:'😏 Flirty', q:"What's something someone could do that would instantly win you over?" },
+  { cat:'😏 Flirty', q:"What's the most romantic thing anyone has ever done for you?" },
+  { cat:'😏 Flirty', q:"What does it feel like when you really click with someone?" },
+  { cat:'😏 Flirty', q:"What's a green flag you always look out for early on with someone?" },
+  { cat:'😏 Flirty', q:"What's your love language — and do you think people actually get it right with you?" },
+  { cat:'😏 Flirty', q:"What's something small that someone does that you find unexpectedly attractive?" },
+  { cat:'😏 Flirty', q:"What does a genuinely great conversation feel like to you?" },
+  { cat:'😏 Flirty', q:"If you could only describe your ideal partner in three words, what would they be?" },
+  { cat:'😏 Flirty', q:"What's the difference between someone you like and someone you can't stop thinking about?" },
+  { cat:'😏 Flirty', q:"What's something you find easy to talk about only when you really trust someone?" },
+  { cat:'😏 Flirty', q:"What's the most memorable compliment you've ever received?" },
+  { cat:'😏 Flirty', q:"What's something you've never been asked on a date but wish someone would ask you?" },
+  { cat:'😏 Flirty', q:"What's something that makes you feel genuinely seen by another person?" },
 ];
 
 function shuffle(arr) {
@@ -83,22 +98,21 @@ function makeCode() {
   return Array.from({length:5}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
 }
 
-// ── Room state ───────────────────────────────────────────────────────────────
-// rooms[code] = { players: [{id, name, hand, answered, passes}x2], deck, phase, currentPlayer, respondingPlayer, playedCard, pTimer, aTimer }
 const rooms = {};
 
-function createRoom(code, customQ = []) {
-  let allQ = [...BASE_QUESTIONS];
-  customQ.forEach((qText, i) => {
-    if (qText.trim()) allQ.push({ cat: '⭐ Custom', q: qText.trim() });
-  });
-  allQ = shuffle(allQ).map((q, i) => ({ ...q, id: i }));
+// ── Build a private deck of 50 for one player ─────────────────────────────────
+// Merges base questions with any custom ones, shuffles, tags with unique ids.
+function buildPlayerDeck(customQ, playerSuffix) {
+  let q = [...BASE_QUESTIONS];
+  customQ.forEach(text => { if (text.trim()) q.push({ cat:'⭐ Custom', q: text.trim() }); });
+  return shuffle(q).slice(0, 50).map((card, i) => ({ ...card, id: `${playerSuffix}-${i}` }));
+}
 
+function createRoom(code, customQ = []) {
   rooms[code] = {
     code,
-    players: [],      // filled as players join
-    deck: allQ,
-    phase: 'waiting', // waiting | pick | answer | end
+    players: [],
+    phase: 'waiting',
     currentPlayer: 0,
     respondingPlayer: 1,
     playedCard: null,
@@ -110,30 +124,31 @@ function createRoom(code, customQ = []) {
   return rooms[code];
 }
 
-function dealCards(room, playerIdx, n = 5) {
-  const p = room.players[playerIdx];
-  while (p.hand.length < n && room.deck.length > 0) {
-    p.hand.push(room.deck.shift());
+// Deal cards from a player's own personal deck into their hand.
+// Stops when hand reaches targetSize OR personal deck is empty.
+function dealToHand(player, targetSize = 5) {
+  while (player.hand.length < targetSize && player.deck.length > 0) {
+    player.hand.push(player.deck.shift());
   }
 }
 
 function broadcastState(room) {
-  // Send each player their own private view
   room.players.forEach((p, idx) => {
-    const opponent = room.players[1 - idx];
+    const opp = room.players[1 - idx];
     io.to(p.id).emit('state', {
       phase: room.phase,
       myIndex: idx,
       currentPlayer: room.currentPlayer,
       respondingPlayer: room.respondingPlayer,
       myName: p.name,
-      opponentName: opponent ? opponent.name : '...',
+      opponentName: opp ? opp.name : '...',
       myHand: p.hand,
+      myDeckCount: p.deck.length,        // cards left in THIS player's personal deck
+      needsDraw: p.needsDraw || false,   // true when hand==1 and deck has cards
       myAnswered: p.answered,
-      opponentAnswered: opponent ? opponent.answered : 0,
+      opponentAnswered: opp ? opp.answered : 0,
       myPasses: p.passes,
-      opponentPasses: opponent ? opponent.passes : 3,
-      deckCount: room.deck.length,
+      opponentPasses: opp ? opp.passes : 3,
       playedCard: room.playedCard,
       pTimerVal: room.pTimerVal,
       aTimerVal: room.aTimerVal,
@@ -150,10 +165,10 @@ function startPlayTimer(room) {
     broadcastState(room);
     if (room.pTimerVal <= 0) {
       clearInterval(room.pTimerInterval);
-      // Auto-play first card
       const cp = room.players[room.currentPlayer];
       if (cp && cp.hand.length > 0) {
-        autoPlayCard(room, 0);
+        // Auto-play their first card
+        executePlayCard(room, 0);
       } else {
         endGame(room);
       }
@@ -170,19 +185,23 @@ function startAnswerTimer(room) {
     broadcastState(room);
     if (room.aTimerVal <= 0) {
       clearInterval(room.aTimerInterval);
-      io.to(room.players[0].id).emit('toast', "⏰ Time's up!");
-      io.to(room.players[1].id).emit('toast', "⏰ Time's up!");
+      room.players.forEach(p => io.to(p.id).emit('toast', "⏰ Time's up!"));
       nextTurn(room);
     }
   }, 1000);
 }
 
-function autoPlayCard(room, cardIdx) {
+// Core card-play logic
+function executePlayCard(room, cardIdx) {
   const cp = room.players[room.currentPlayer];
   const card = cp.hand.splice(cardIdx, 1)[0];
-  dealCards(room, room.currentPlayer);
   room.playedCard = card;
   room.phase = 'answer';
+
+  // After playing, check if hand is now down to 1 AND deck still has cards
+  // → flag needsDraw so the client shows the "Draw 4" prompt next pick phase
+  cp.needsDraw = cp.hand.length === 1 && cp.deck.length > 0;
+
   broadcastState(room);
   startAnswerTimer(room);
 }
@@ -194,10 +213,13 @@ function nextTurn(room) {
   room.phase = 'pick';
   room.playedCard = null;
 
+  // Check game-over: both players have exhausted hand AND deck
   const p0 = room.players[0], p1 = room.players[1];
-  if (p0.hand.length === 0 && p1.hand.length === 0 && room.deck.length === 0) {
+  if (p0.hand.length === 0 && p0.deck.length === 0 &&
+      p1.hand.length === 0 && p1.deck.length === 0) {
     endGame(room); return;
   }
+
   broadcastState(room);
   startPlayTimer(room);
 }
@@ -209,16 +231,18 @@ function endGame(room) {
   broadcastState(room);
 }
 
-// ── Socket.io ────────────────────────────────────────────────────────────────
+// ── Socket.io ─────────────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
 
-  // Host creates a room
   socket.on('create_room', ({ name, customQ }) => {
     let code;
     do { code = makeCode(); } while (rooms[code]);
-    const room = createRoom(code, customQ || []);
-    room.players.push({ id: socket.id, name: name || 'Player 1', hand: [], answered: 0, passes: 3 });
-    dealCards(room, 0);
+    createRoom(code, customQ || []);
+    const room = rooms[code];
+    const playerDeck = buildPlayerDeck(customQ || [], 'p0');
+    const player = { id: socket.id, name: name || 'Player 1', deck: playerDeck, hand: [], answered: 0, passes: 3, needsDraw: false };
+    dealToHand(player, 5);
+    room.players.push(player);
     socket.join(code);
     socket.data.roomCode = code;
     socket.data.playerIdx = 0;
@@ -226,80 +250,80 @@ io.on('connection', (socket) => {
     socket.emit('waiting_for_opponent');
   });
 
-  // Guest joins a room
-  socket.on('join_room', ({ code, name }) => {
+  socket.on('join_room', ({ code, name, customQ }) => {
     const room = rooms[code.toUpperCase()];
     if (!room) { socket.emit('error_msg', 'Room not found. Check the code!'); return; }
     if (room.players.length >= 2) { socket.emit('error_msg', 'Room is already full!'); return; }
     if (room.phase !== 'waiting') { socket.emit('error_msg', 'Game already in progress!'); return; }
 
-    room.players.push({ id: socket.id, name: name || 'Player 2', hand: [], answered: 0, passes: 3 });
-    dealCards(room, 1);
+    const playerDeck = buildPlayerDeck(customQ || [], 'p1');
+    const player = { id: socket.id, name: name || 'Player 2', deck: playerDeck, hand: [], answered: 0, passes: 3, needsDraw: false };
+    dealToHand(player, 5);
+    room.players.push(player);
     socket.join(code.toUpperCase());
     socket.data.roomCode = code.toUpperCase();
     socket.data.playerIdx = 1;
 
-    // Game starts!
     room.phase = 'pick';
     broadcastState(room);
     startPlayTimer(room);
   });
 
-  // Play a card
+  // Player draws 4 more cards (when they have exactly 1 left)
+  socket.on('draw_cards', () => {
+    const room = rooms[socket.data.roomCode];
+    if (!room || room.phase !== 'pick') return;
+    if (socket.data.playerIdx !== room.currentPlayer) return;
+    const cp = room.players[room.currentPlayer];
+    // Only allowed when hand is exactly 1 and needsDraw is true
+    if (!cp.needsDraw || cp.hand.length !== 1) return;
+
+    dealToHand(cp, 5); // draws up to 4 more (to reach 5 total)
+    cp.needsDraw = false;
+    broadcastState(room);
+  });
+
   socket.on('play_card', ({ cardIdx }) => {
     const room = rooms[socket.data.roomCode];
     if (!room || room.phase !== 'pick') return;
     if (socket.data.playerIdx !== room.currentPlayer) return;
     const cp = room.players[room.currentPlayer];
     if (cardIdx < 0 || cardIdx >= cp.hand.length) return;
+    // Block playing if they need to draw first
+    if (cp.needsDraw) { socket.emit('toast', 'Draw your new cards first!'); return; }
 
     clearInterval(room.pTimerInterval);
-    autoPlayCard(room, cardIdx);
+    executePlayCard(room, cardIdx);
   });
 
-  // Mark answered
   socket.on('mark_answered', () => {
     const room = rooms[socket.data.roomCode];
     if (!room || room.phase !== 'answer') return;
-    // Only the current player (who played the card) can mark it answered
     if (socket.data.playerIdx !== room.currentPlayer) return;
-
     clearInterval(room.aTimerInterval);
     room.players[room.respondingPlayer].answered++;
     const rName = room.players[room.respondingPlayer].name;
-    io.to(room.players[0].id).emit('toast', `✅ ${rName} answered!`);
-    io.to(room.players[1].id).emit('toast', `✅ ${rName} answered!`);
+    room.players.forEach(p => io.to(p.id).emit('toast', `✅ ${rName} answered!`));
     nextTurn(room);
   });
 
-  // Pass
   socket.on('use_pass', () => {
     const room = rooms[socket.data.roomCode];
     if (!room || room.phase !== 'answer') return;
-    // Only the responder can pass
     if (socket.data.playerIdx !== room.respondingPlayer) return;
     const rp = room.players[room.respondingPlayer];
     if (rp.passes <= 0) { socket.emit('toast', 'No passes left!'); return; }
-
     clearInterval(room.aTimerInterval);
     rp.passes--;
-    io.to(room.players[0].id).emit('toast', `❤️ ${rp.name} passed (${rp.passes} left)`);
-    io.to(room.players[1].id).emit('toast', `❤️ ${rp.name} passed (${rp.passes} left)`);
+    room.players.forEach(p => io.to(p.id).emit('toast', `❤️ ${rp.name} passed (${rp.passes} left)`));
     nextTurn(room);
   });
 
-  // Disconnect
   socket.on('disconnect', () => {
     const code = socket.data.roomCode;
     const room = rooms[code];
     if (!room) return;
-    // Notify opponent
-    room.players.forEach(p => {
-      if (p.id !== socket.id) {
-        io.to(p.id).emit('opponent_left');
-      }
-    });
-    // Clean up room after delay
+    room.players.forEach(p => { if (p.id !== socket.id) io.to(p.id).emit('opponent_left'); });
     setTimeout(() => { delete rooms[code]; }, 30000);
   });
 });
